@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RangoAgil.API.DbContexts;
+using System.Xml.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,36 +13,18 @@ var app = builder.Build();
 
 app.MapGet("/", () => "Hello World!");
 
-app.MapGet("/rangos", async (RangoDbContext rangoDbContext) =>
+
+app.MapGet("/rangos", async (RangoDbContext rangoDbContext, [FromQuery(Name = "name")] string rangoNome) =>
 {
-    return await rangoDbContext.Rangos.ToListAsync();
+    return await rangoDbContext.Rangos
+                               .Where(x => x.Nome.Contains(rangoNome)).
+                               ToListAsync();
 });
 
-app.MapGet("/rango/{nome}", async (RangoDbContext rangoDbContext, string nome) =>
-{
-    return await rangoDbContext.Rangos.FirstOrDefaultAsync(x => x.Nome == nome);
-});
-
-app.MapGet("/rango", async (RangoDbContext rangoDbContext, [FromQuery(Name = "RangoId")] int id) =>
+app.MapGet("/rango/{id:int}", async (RangoDbContext rangoDbContext, int id) =>
 {
     return await rangoDbContext.Rangos.FirstOrDefaultAsync(x => x.Id == id);
 });
 
-/*
-Model Binding
-
-FromQuery - Parâmetros na URL/Query String
-app.MapGet("/rango", (RangoDbContext rangoDbContext, [FromQuery] int id) =>
-{
-    return rangoDbContext.Rangos.FirstOrDefault(x => x.Id == id);
-});
-
-FromHeader - Cabeçalhos HTTP
-app.MapGet("/rango", (RangoDbContext rangoDbContext, [FromHeader(Name = "RangoId")] int id) =>
-{
-    return rangoDbContext.Rangos.FirstOrDefault(x => x.Id == id);
-});
-
-*/
 
 app.Run();
