@@ -11,19 +11,21 @@ builder.Services.AddDbContext<RangoDbContext>(
     o => o.UseSqlite(builder.Configuration["ConnectionStrings:RangoDbConStr"])
 );
 
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 var app = builder.Build();
 
 app.MapGet("/", () => "Hello World!");
 
 
-app.MapGet("/rangos", async Task<Results<NoContent, Ok<List<Rango>>>> 
-    (RangoDbContext rangoDbContext, 
+app.MapGet("/rangos", async Task<Results<NoContent, Ok<List<Rango>>>>
+    (RangoDbContext rangoDbContext,
     [FromQuery(Name = "name")] string? rangoNome) =>
 {
     var rangosEntity = await rangoDbContext.Rangos
                                .Where(x => rangoNome == null || x.Nome.ToLower().Contains(rangoNome.ToLower())).
                                ToListAsync();
-    if (rangosEntity.Count <= 0  || rangosEntity == null)
+    if (rangosEntity.Count <= 0 || rangosEntity == null)
     {
         return TypedResults.NoContent();
     }
@@ -31,6 +33,13 @@ app.MapGet("/rangos", async Task<Results<NoContent, Ok<List<Rango>>>>
     {
         return TypedResults.Ok(rangosEntity);
     }
+});
+
+app.MapGet("/rangos/{rangoId:int}/ingedientes", async (RangoDbContext rangoDbContext, int rangoId) =>
+{
+    return await rangoDbContext.Rangos
+                               .Include(rango => rango.Ingredientes)
+                               .FirstOrDefaultAsync(rango => rango.Id == rangoId);
 });
 
 app.MapGet("/rango/{id:int}", async (RangoDbContext rangoDbContext, int id) =>
