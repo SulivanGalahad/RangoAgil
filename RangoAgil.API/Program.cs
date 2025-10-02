@@ -96,7 +96,8 @@ app.MapGet("/rango/{id:int}", async (
         return TypedResults.CreatedAtRoute(rangoToReturn, "GetRango", new { id = rangoToReturn.Id });
     });
 
-app.MapPut("/rango/{id:int}/ingredientes", async Task<Results<NotFound, Ok>> (
+
+app.MapPut("/rango/{id:int}", async Task<Results<NotFound, Ok>> (
     RangoDbContext rangoDbContext,
     IMapper mapper,
     int id,
