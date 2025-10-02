@@ -58,5 +58,18 @@ app.MapGet("/rango/{id:int}", async (
     return mapper.Map<RangoDTO>(await rangoDbContext.Rangos.FirstOrDefaultAsync(x => x.Id == id));
 });
 
+app.MapPost("/rango", async (
+    RangoDbContext rangoDbContext,
+    IMapper mapper,
+    [FromBody] RangoForCreateDTO rangoForCreate) =>
+    {
+        var rangoEntity = mapper.Map<Rango>(rangoForCreate);
+        rangoDbContext.Add(rangoEntity);
+        await rangoDbContext.SaveChangesAsync();
+
+        var rangoToReturn = mapper.Map<RangoForCreateDTO>(rangoEntity);
+        return TypedResults.Ok(rangoToReturn);
+    });
+
 
 app.Run();
