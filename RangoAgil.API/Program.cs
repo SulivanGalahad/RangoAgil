@@ -116,6 +116,24 @@ app.MapPut("/rango/{id:int}", async Task<Results<NotFound, Ok>> (
 
     return TypedResults.Ok();
 
+});
+
+app.MapDelete("/rango/{id:int}", async Task<Results<NotFound, NoContent>> (
+    RangoDbContext rangoDbContext,
+    int id) =>
+{
+    var rangoEntity = await rangoDbContext.Rangos.FirstOrDefaultAsync(x => x.Id == id);
+
+    if (rangoEntity == null)
+    {
+        return TypedResults.NotFound();
+    }
+
+    rangoDbContext.Rangos.Remove(rangoEntity);
+   
+    await rangoDbContext.SaveChangesAsync();
+
+    return TypedResults.NoContent();
 
 });
 
