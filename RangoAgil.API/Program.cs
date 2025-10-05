@@ -5,8 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using RangoAgil.API.DbContexts;
 using RangoAgil.API.Entities;
 using RangoAgil.API.Models;
-using System.Collections;
-using System.Xml.Linq;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,8 +19,11 @@ var app = builder.Build();
 
 app.MapGet("/", () => "Hello World!");
 
+var rangosEndpoints = app.MapGroup("/rangos");
+var rangosWithIdEndpoints = rangosEndpoints.MapGroup("/{rangoId:int}");
+var ingredientesRangoEndpoints = rangosWithIdEndpoints.MapGroup("/ingredientes");
 
-app.MapGet("/rangos", async Task<Results<NoContent, Ok<IEnumerable<RangoDTO>>>>
+rangosEndpoints.MapGet("", async Task<Results<NoContent, Ok<IEnumerable<RangoDTO>>>>
     (RangoDbContext rangoDbContext,
     IMapper mapper,
     [FromQuery(Name = "name")] string? rangoNome) =>
@@ -40,7 +42,7 @@ app.MapGet("/rangos", async Task<Results<NoContent, Ok<IEnumerable<RangoDTO>>>>
     }
 });
 
-app.MapGet("/rangos/{rangoId:int}/ingredientes", async (
+ingredientesRangoEndpoints.MapGet("", async (
     RangoDbContext rangoDbContext,
     IMapper mapper,
     int rangoId) =>
@@ -50,7 +52,7 @@ app.MapGet("/rangos/{rangoId:int}/ingredientes", async (
                                .FirstOrDefaultAsync(rango => rango.Id == rangoId))?.Ingredientes);
 });
 
-app.MapGet("/rangos/{rangoId:int}", async (
+rangosWithIdEndpoints.MapGet("", async (
     RangoDbContext rangoDbContext,
     IMapper mapper,
     int rangoId) =>
@@ -82,7 +84,7 @@ app.MapGet("/rangos/{rangoId:int}", async (
     }); */
 
 
-    app.MapPost("/rangos", async Task<CreatedAtRoute<RangoDTO>> (
+    rangosEndpoints.MapPost("", async Task<CreatedAtRoute<RangoDTO>> (
     RangoDbContext rangoDbContext,
     IMapper mapper,
     [FromBody] RangoForCreateDTO rangoForCreate) =>
@@ -101,7 +103,7 @@ app.MapGet("/rangos/{rangoId:int}", async (
     });
 
 
-app.MapPut("/rangos/{rangoId:int}", async Task<Results<NotFound, Ok>> (
+rangosWithIdEndpoints.MapPut("", async Task<Results<NotFound, Ok>> (
     RangoDbContext rangoDbContext,
     IMapper mapper,
     int rangoId,
@@ -122,7 +124,7 @@ app.MapPut("/rangos/{rangoId:int}", async Task<Results<NotFound, Ok>> (
 
 });
 
-app.MapDelete("/rangos/{rangoId:int}", async Task<Results<NotFound, NoContent>> (
+rangosWithIdEndpoints.MapDelete("", async Task<Results<NotFound, NoContent>> (
     RangoDbContext rangoDbContext,
     int rangoId) =>
 {
