@@ -1,12 +1,10 @@
-using AutoMapper;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
+
+using System.Net;
 using Microsoft.EntityFrameworkCore;
 using RangoAgil.API.DbContexts;
-using RangoAgil.API.Entities;
-using RangoAgil.API.Models;
-using System.Collections;
-using System.Xml.Linq;
+using RangoAgil.API.EndpointHandlers;
+using RangoAgil.API.Extensions;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,47 +14,29 @@ builder.Services.AddDbContext<RangoDbContext>(
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler();
+    //app.UseExceptionHandler(configureApplicationBuilder =>
+    //{
+    //    configureApplicationBuilder.Run(
+    //        async context =>
+    //        {
+    //            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+    //            context.Response.ContentType = "text/html";
+    //            await context.Response.WriteAsync("An unexpected problem happened.");
+    //        });
+    //});
+}
 
 app.MapGet("/", () => "Hello World!");
 
-
-app.MapGet("/rangos", async Task<Results<NoContent, Ok<IEnumerable<RangoDTO>>>>
-    (RangoDbContext rangoDbContext,
-    IMapper mapper,
-    [FromQuery(Name = "name")] string? rangoNome) =>
-{
-    var rangosEntity = await rangoDbContext.Rangos
-                               .Where(x => rangoNome == null || x.Nome.ToLower().Contains(rangoNome.ToLower()))
-                               .ToListAsync();
-
-    if (rangosEntity.Count <= 0 || rangosEntity == null)
-    {
-        return TypedResults.NoContent();
-    }
-    else
-    {
-        return TypedResults.Ok(mapper.Map<IEnumerable<RangoDTO>>(rangosEntity));
-    }
-});
-
-app.MapGet("/rango/{rangoId:int}/ingredientes", async (
-    RangoDbContext rangoDbContext,
-    IMapper mapper,
-    int rangoId) =>
-{
-    return mapper.Map<IEnumerable<IngredienteDTO>> ((await rangoDbContext.Rangos
-                               .Include(rango => rango.Ingredientes)
-                               .FirstOrDefaultAsync(rango => rango.Id == rangoId))?.Ingredientes);
-});
-
-app.MapGet("/rango/{id:int}", async (
-    RangoDbContext rangoDbContext,
-    IMapper mapper,
-    int id) =>
-{
-    return mapper.Map<RangoDTO>(await rangoDbContext.Rangos.FirstOrDefaultAsync(x => x.Id == id));
-});
+app.RegisterRangosEndpoints();
+app.RegisterIngredientesEndpoints();
 
 
 app.Run();
